@@ -24,18 +24,18 @@ float evaluate(Board *board)
     float score = 0;
 
     // Add up piece values
-    score += pieceValues[Pieces::Pawn] * board->pieces[Pieces::Pawn][0].count;
-    score -= pieceValues[Pieces::Pawn] * board->pieces[Pieces::Pawn][1].count;
-    score += pieceValues[Pieces::Knight] * board->pieces[Pieces::Knight][0].count;
-    score -= pieceValues[Pieces::Knight] * board->pieces[Pieces::Knight][1].count;
-    score += pieceValues[Pieces::Bishop] * board->pieces[Pieces::Bishop][0].count;
-    score -= pieceValues[Pieces::Bishop] * board->pieces[Pieces::Bishop][1].count;
-    score += pieceValues[Pieces::Rook] * board->pieces[Pieces::Rook][0].count;
-    score -= pieceValues[Pieces::Rook] * board->pieces[Pieces::Rook][1].count;
-    score += pieceValues[Pieces::Queen] * board->pieces[Pieces::Queen][0].count;
-    score -= pieceValues[Pieces::Queen] * board->pieces[Pieces::Queen][1].count;
-    score += pieceValues[Pieces::King] * board->pieces[Pieces::King][0].count;
-    score -= pieceValues[Pieces::King] * board->pieces[Pieces::King][1].count;
+    score += pieceValues[Pieces::Pawn] * popCount(board->pieceBB[Pieces::Pawn] & board->colorBB[Pieces::White]);
+    score -= pieceValues[Pieces::Pawn] * popCount(board->pieceBB[Pieces::Pawn] & board->colorBB[Pieces::Black]);
+    score += pieceValues[Pieces::Knight] * popCount(board->pieceBB[Pieces::Knight] & board->colorBB[Pieces::White]);
+    score -= pieceValues[Pieces::Knight] * popCount(board->pieceBB[Pieces::Knight] & board->colorBB[Pieces::Black]);
+    score += pieceValues[Pieces::Bishop] * popCount(board->pieceBB[Pieces::Bishop] & board->colorBB[Pieces::White]);
+    score -= pieceValues[Pieces::Bishop] * popCount(board->pieceBB[Pieces::Bishop] & board->colorBB[Pieces::Black]);
+    score += pieceValues[Pieces::Rook] * popCount(board->pieceBB[Pieces::Rook] & board->colorBB[Pieces::White]);
+    score -= pieceValues[Pieces::Rook] * popCount(board->pieceBB[Pieces::Rook] & board->colorBB[Pieces::Black]);
+    score += pieceValues[Pieces::Queen] * popCount(board->pieceBB[Pieces::Queen] & board->colorBB[Pieces::White]);
+    score -= pieceValues[Pieces::Queen] * popCount(board->pieceBB[Pieces::Queen] & board->colorBB[Pieces::Black]);
+    score += pieceValues[Pieces::King] * popCount(board->pieceBB[Pieces::King] & board->colorBB[Pieces::White]);
+    score -= pieceValues[Pieces::King] * popCount(board->pieceBB[Pieces::King] & board->colorBB[Pieces::Black]);
 
 
     // Piece Tables

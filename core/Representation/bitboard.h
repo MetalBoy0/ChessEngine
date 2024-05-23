@@ -45,8 +45,6 @@ namespace
         return 1ull << square;
     }
 
-    
-
     // Returns a bool if there is a 1 at the specified square else 0
     bool getBit(Bitboard *bitboard, int square)
     {
@@ -84,6 +82,12 @@ namespace
     {
         return __builtin_popcountll(*bb);
     }
+
+    int popCount(Bitboard bb)
+    {
+        return __builtin_popcountll(bb);
+    }
+
     template <Direction dir>
     Bitboard shift(Bitboard *bb)
     {

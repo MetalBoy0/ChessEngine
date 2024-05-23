@@ -5,12 +5,10 @@
 #include "uci.h"
 #include "core\Search\evaluate.h"
 #include "core\representation\bitboard.h"
-#include "core\Search\search.h"
 #include "core\Search\moveOrder.h"
 #include <chrono>
 #include "core\MoveGeneration\movegen.h"
 #include "microbench\microbench.h"
-#include "core\search\search.h"
 
 #define MAX_INT -1u;
 #define MAX_DEPTH 8;
@@ -21,6 +19,7 @@ Board board;
 
 void setup()
 {
+    
     board = Board();
 
     // Preform several benchmarking tests here:
@@ -281,6 +280,11 @@ void parseMakeMove(istringstream &parser)
     Move move = stringToMove(input, board);
     board.makeMove(move);
     cout << board.zobristKey << "\n";
+}
+
+void parseClearTT(istringstream &parser)
+{
+    clearTTSearch();
 }
 
 void parseUndoMove(istringstream &parser)

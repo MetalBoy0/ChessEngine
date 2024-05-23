@@ -87,6 +87,9 @@ int main()
             parseEval(parser);
             //cout << "\n-\n";
         }
+        else if (input == "clear") {
+            parseClearTT(parser);
+        }
         else
         {
             cout << "Unknown command: " << input;

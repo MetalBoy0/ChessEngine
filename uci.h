@@ -21,6 +21,7 @@ extern void parseDebug(istringstream &parser);    // Handles the "debug" command
 extern void parseDisplay(istringstream &parser);  // Handles the "d" command
 extern void parseMakeMove(istringstream &parser); // Handles the "makemove" command
 extern void parseUndoMove(istringstream &parser); // Handles the "undomove" command
+extern void parseClearTT(istringstream &parser);     // Handles the "clearTT" command
 extern void setup();                              // set up the uci and other relevant variables
 
 

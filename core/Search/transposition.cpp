@@ -69,6 +69,10 @@ TranspositionTable::TranspositionTable(int size)
     for (int i = 0; i < this->size; i++)
     {
         table[i].evalType = NOTINIT;
+        table[i].zobrist = 0;
+        table[i].depth = 0;
+        table[i].value = 0;
+        table[i].bestMove = 0;
     }
     for (int i = 0; i < this->size; i++)
     {
