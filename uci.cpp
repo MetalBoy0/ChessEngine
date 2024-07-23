@@ -19,8 +19,6 @@ Board board;
 
 void setup()
 {
-    
-    board = Board();
 
     // Preform several benchmarking tests here:
     // cout << moodycamel::microbench([&]() {board.makeMove(board.getMove(10,18));},100, 10) << endl;
@@ -254,7 +252,6 @@ void parseGo(istringstream &parser)
         cout << "Perft search to depth: " << depthValue << "\n"
              << "Took " << chrono::duration_cast<chrono::milliseconds>(stop - start).count() << "ms\n";
         cout << "Nodes: " << perft << "\n";
-        cout << board.zobristKey;
     }
     else
     {

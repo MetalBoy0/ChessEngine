@@ -51,6 +51,8 @@ public:
     bool blackCanCastleQueenSide;
 
     // Move Handling
+    void setPiece(Piece piece, int square);
+    void removePiece(int square);
     void makeMove(Move move);
     void undoMove();
     void setMove(Move move);
@@ -92,7 +94,7 @@ public:
 namespace PieceSquareTable
 {
     // Note that these values are from black's perspective
-    const int psq[7][64] = {{0},
+    const int psq[][64] = {{0},
                             { 0,  0,  0,  0,  0,  0,  0,  0, //Pawn
                             50, 50, 50, 50, 50, 50, 50, 50,
                             10, 10, 20, 30, 30, 20, 10, 10,
@@ -215,7 +217,7 @@ public:
 };
 namespace Zobrist
 {
-    extern unsigned long long piece[12][64];
+    extern unsigned long long piece[13][64];
     extern unsigned long long side[2];
     extern unsigned long long castle[16];
     extern unsigned long long enPassant[8];
