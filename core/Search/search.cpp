@@ -77,10 +77,6 @@ float qsearch(Board *board, int ply, float alpha, float beta)
         board->makeMove(moveList.moves[i]);
         float value = -qsearch(board, ply + 1, -beta, -alpha);
         board->undoMove();
-        if (board->score != score)
-        {
-            cout << "bad";
-        }
 
         // if (oldZ != board->zobristKey)
         //{
@@ -162,15 +158,6 @@ float search(Board *board, unsigned int depth, int ply, float alpha,
         board->makeMove(move);
         float value = -search(board, depth - 1, ply + 1, -beta, -alpha);
         board->undoMove();
-
-        if (board->score != score)
-        {
-            cout << "bad";
-        }
-        // if (oldZ != board->zobristKey)
-        //{
-        //     cout << moveToString(move) << " " << depth;
-        // }
         if (value >= beta)
         {
             tt->store(board->zobristKey, depth, value, move,
@@ -220,6 +207,7 @@ void startIterativeDeepening(Board *board, unsigned int maxDepth,
         bestMove.move = 0;
         bestMove.value = -100000;
         cout << board->score << "\n";
+
         search(board, i, 0, NEGINF, POSINF);
 
         unsigned long long currentTime =
@@ -287,16 +275,16 @@ unsigned int perft(Board *board, unsigned int depth)
     for (int i = 0; i < moveList.count; i++)
     {
         Move move = moveList.moves[i];
-        // unsigned long long oldZ = board->zobristKey;
+        unsigned long long oldColorBB = board->colorBB[Pieces::Color::Black];
         int score = board->score;
         board->makeMove(move);
         nodes += perft(board, depth - 1);
         board->undoMove();
 
-        // if (oldZ != board->zobristKey)
-        //{
-        //     cout << moveToString(move) << " " << depth;
-        // }
+        if (oldColorBB != board->colorBB[Pieces::Color::Black])
+        {
+            cout << moveToString(move) << " " << depth;
+        }
     }
     return nodes;
 }

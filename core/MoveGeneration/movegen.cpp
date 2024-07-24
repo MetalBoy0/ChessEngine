@@ -269,10 +269,10 @@ void generatePawnMoves(Board *board, MoveList *MoveList, bool onlyCaptures)
 
         if (indexToRank(to) == 0 || indexToRank(to) == 7)
         {
-            appendMove(MoveList, board->getMove(from, to, Pieces::Queen));
-            appendMove(MoveList, board->getMove(from, to, Pieces::Rook));
-            appendMove(MoveList, board->getMove(from, to, Pieces::Bishop));
-            appendMove(MoveList, board->getMove(from, to, Pieces::Knight));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Queen | board->sideToMove));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Rook | board->sideToMove));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Bishop | board->sideToMove));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Knight | board->sideToMove));
         }
         else
         {
@@ -339,10 +339,10 @@ void generatePawnMoves(Board *board, MoveList *MoveList, bool onlyCaptures)
 
         if (indexToRank(to) == 0 || indexToRank(to) == 7)
         {
-            appendMove(MoveList, board->getMove(from, to, Pieces::Queen));
-            appendMove(MoveList, board->getMove(from, to, Pieces::Rook));
-            appendMove(MoveList, board->getMove(from, to, Pieces::Bishop));
-            appendMove(MoveList, board->getMove(from, to, Pieces::Knight));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Queen | board->sideToMove));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Rook | board->sideToMove));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Bishop | board->sideToMove));
+            appendMove(MoveList, board->getMove(from, to, Pieces::Knight | board->sideToMove));
         }
         else
         {

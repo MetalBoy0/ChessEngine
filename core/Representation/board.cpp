@@ -172,7 +172,10 @@ void Board::setMove(Move move)
     Piece movePiece = board[from];
     Piece capturedPiece = getCapturedPiece(move);
 
-    assert(capturedPiece != Pieces::King);
+    if (Pieces::getType(capturedPiece) == Pieces::King)
+    {
+        assert(false);
+    }
 
     removePiece(from);
 
@@ -370,7 +373,6 @@ void Board::makeMove(Move move)
 {
     // cout << zobristKey << "\n";
 
-    
     int from = getFrom(move);
     int to = getTo(move);
     Piece movePiece = board[from];
@@ -551,7 +553,7 @@ void Board::makeMove(Move move)
 
     enPassantHistory[ply] = enPassantSquare;
     enPassantSquare = -1;
-    
+
     // Update en passant square for next move
     if (Pieces::isPawn(movePiece))
     {
@@ -590,12 +592,12 @@ void Board::makeMove(Move move)
     attackedBB[otherSide] = getAttackedBB(otherSide);
 
     inCheck = attackedBB[otherSide] & pieceBB[Pieces::King] & colorBB[sideToMove];
-    castleKey = blackCanCastleKingSide << 3 | blackCanCastleQueenSide << 2 |
-                whiteCanCastleKingSide << 1 | whiteCanCastleKingSide << 0;
+    // castleKey = blackCanCastleKingSide << 3 | blackCanCastleQueenSide << 2 |
+    //             whiteCanCastleKingSide << 1 | whiteCanCastleKingSide << 0;
 
-    zobristKey ^= Zobrist::side[isWhite];
-    zobristKey ^= Zobrist::side[!isWhite];
-    // cout << zobristKey;
+    // zobristKey ^= Zobrist::side[isWhite];
+    // zobristKey ^= Zobrist::side[!isWhite];
+    //  cout << zobristKey;
 }
 
 void Board::undoMove()
@@ -616,7 +618,7 @@ void Board::undoMove()
         int to = getTo(pastMoves[ply]);
 
         removePiece(to);
-        setPiece(Pieces::Pawn | otherSide, to);
+        setPiece(Pieces::Pawn | sideToMove, to);
     }
     // Update castling rights
     if (isCastle(pastMoves[ply]))
@@ -688,8 +690,8 @@ void Board::undoMove()
 
     // zobristKey = enPassantHash ^ Zobrist::side[isWhite] ^
     // Zobrist::castle[castleKey]; cout << zobristKey << "\n";
-    zobristKey ^= Zobrist::side[isWhite];
-    zobristKey ^= Zobrist::side[!isWhite];
+    // zobristKey ^= Zobrist::side[isWhite];
+    // zobristKey ^= Zobrist::side[!isWhite];
 }
 
 bool Board::isCheck(Move move)
@@ -829,7 +831,7 @@ void Board::printBoard()
 }
 namespace Zobrist
 {
-    unsigned long long piece[13][64];
+    unsigned long long piece[15][64];
     unsigned long long side[2];
     unsigned long long castle[16];
     unsigned long long enPassant[8];
@@ -839,7 +841,7 @@ namespace Zobrist
         cout << "Initializing Zobrist hash... ";
         RNG rng;
 
-        for (int p = 0; p < 12; p++)
+        for (int p = 0; p < 15; p++)
         {
             for (int i = 0; i < 64; i++)
             {

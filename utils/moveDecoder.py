@@ -34,7 +34,7 @@ def decodeMove(move: int):
     fromPos = (fromPos % 8 + 1, fromPos // 8 + 1)
     toPos = (toPos % 8 + 1, toPos // 8 + 1)
     moveStr = (
-        chr(fromPos[1] + 96) + str(fromPos[0]) + chr(toPos[1] + 96) + str(toPos[0])
+        chr(fromPos[0] + 96) + str(fromPos[1]) + chr(toPos[0] + 96) + str(toPos[1])
     )
     print(
         f"Move: {move}\n      {moveStr}\n     From: {fromPos}\n       To: {toPos}\nPromotion: {promotion}\nIsPromote: {isPromote}\nIsCapture: {isCapture}\n IsCastle: {isCastle}\nCapturedPiece: {capturedPiece}"

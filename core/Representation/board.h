@@ -217,7 +217,7 @@ public:
 };
 namespace Zobrist
 {
-    extern unsigned long long piece[13][64];
+    extern unsigned long long piece[15][64];
     extern unsigned long long side[2];
     extern unsigned long long castle[16];
     extern unsigned long long enPassant[8];
