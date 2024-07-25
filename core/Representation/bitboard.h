@@ -35,7 +35,7 @@ extern Bitboard dirToBB[8][64];
 extern void printBitboard(Bitboard *bb);
 extern Bitboard bitboardRay(Direction dir, int square);
 extern Bitboard bitboardRay(int from, int to);
-extern Bitboard sendRay(Bitboard *bb, Direction dir, int square);
+extern Bitboard sendRay(const Bitboard *bb, const Direction dir, const int square);
 extern void initBBs();
 namespace
 {
@@ -46,44 +46,49 @@ namespace
     }
 
     // Returns a bool if there is a 1 at the specified square else 0
-    bool getBit(Bitboard *bitboard, int square)
+    inline constexpr bool getBit(const Bitboard *bitboard, const int square)
     {
-        return *bitboard & 1ULL << square;
+        return *bitboard >> square & 1ULL;
     }
 
-    void setBit(Bitboard *bitboard, int square)
+    inline constexpr bool getBit(const Bitboard bitboard, const int square)
+    {
+        return bitboard >> square & 1ULL;
+    }
+
+    inline constexpr void setBit(Bitboard *bitboard, const int square)
     {
         *bitboard |= 1ULL << square;
     }
 
-    void clearBit(Bitboard *bitboard, int square)
+    void clearBit(Bitboard *bitboard, const int square)
     {
         *bitboard &= ~(1ULL << square);
     }
 
-    void toggleBit(Bitboard *bitboard, int square)
+    void toggleBit(Bitboard *bitboard, const int square)
     {
         *bitboard ^= 1ULL << square;
     }
 
-    int getLSB(Bitboard *bb)
+    inline int getLSB(const Bitboard *bb)
     {
         return __builtin_ctzll(*bb);
     }
 
-    int popLSB(Bitboard *bb)
+    inline int popLSB(Bitboard *bb)
     {
-        int index = getLSB(bb);
+        const int index = getLSB(bb);
         *bb &= *bb - 1; // Not depend on the previous line
         return index;
     }
 
-    int popCount(Bitboard *bb)
+    inline int popCount(const Bitboard *bb)
     {
         return __builtin_popcountll(*bb);
     }
 
-    int popCount(Bitboard bb)
+    inline int popCount(Bitboard bb)
     {
         return __builtin_popcountll(bb);
     }
@@ -110,7 +115,7 @@ namespace
     }
 
     template <>
-    inline Bitboard getAttackBB<Pieces::Knight>(int s)
+    inline Bitboard getAttackBB<Pieces::Knight>(const int s)
     {
         return knightMoves[s];
     }

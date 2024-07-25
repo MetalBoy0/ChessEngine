@@ -206,7 +206,6 @@ void startIterativeDeepening(Board *board, unsigned int maxDepth,
         diagnostics.time = startDepthTime;
         bestMove.move = 0;
         bestMove.value = -100000;
-        cout << board->score << "\n";
 
         search(board, i, 0, NEGINF, POSINF);
 
@@ -258,15 +257,15 @@ Move startSearch(Board *board, unsigned int depth, int maxTime, int maxNodes,
     return bestMove.move;
 }
 
-unsigned int perft(Board *board, unsigned int depth)
+unsigned int perft(Board *board, const unsigned int depth)
 {
     MoveList moveList;
     generateMoves(board, &moveList);
-    if (depth == 1)
+    if (depth == 1U)
     {
         return moveList.count;
     }
-    else if (depth == 0)
+    else if (depth == 0U)
     {
         return 1;
     }

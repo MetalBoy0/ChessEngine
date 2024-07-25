@@ -1,6 +1,7 @@
 #include "../MoveGeneration/movegen.h"
 #include "bitboard.h"
 #include "board.h"
+#include "../../uci.h"
 #include <cassert>
 
 // Resets bitboards based on the board array
@@ -9,14 +10,14 @@ int invertX(int i)
 {
     int x = 7 - i % 8;
     int y = i / 8;
-    return x + y * 8;
+    return x + y << 3;
 }
 
 int flipSide(int i)
 {
-    int x = i % 8;
-    int y = 7 - i / 8;
-    return x + y * 8;
+    int x = indexToFile(i);
+    int y = indexToRank(i);
+    return x + y << 3; // Reverting by not using 7 - 
 }
 
 // appends a bitboard of pieces to a list of indexes
@@ -83,7 +84,7 @@ void Board::setPiece(Piece piece, int square)
     if (type != Pieces::Empty)
     {
         int invert = invertY(square);
-        score += PieceSquareTable::psq[type][Pieces::isBlack(piece) ? square : invert] * (Pieces::isWhite(piece) ? 1 : -1);
+        score += PieceSquareTable::psq[type][Pieces::isWhite(piece) ? square : invert] * (Pieces::isWhite(piece) ? 1 : -1);
     }
 
     board[square] = piece;
@@ -109,7 +110,7 @@ void Board::removePiece(int square)
     if (type != Pieces::Empty)
     {
         int invert = invertY(square);
-        score -= PieceSquareTable::psq[type][Pieces::isBlack(piece) ? square : invert] * (Pieces::isWhite(piece) ? 1 : -1);
+        score -= PieceSquareTable::psq[type][Pieces::isWhite(piece) ? square : invert] * (Pieces::isWhite(piece) ? 1 : -1);
     }
 
     board[square] = Pieces::Empty;
@@ -120,8 +121,8 @@ void Board::loadFEN(string fen, bool isWhite, bool whiteCanCastleKingSide,
                     bool blackCanCastleQueenSide, int enPassantSquare)
 {
     int current = 0;
-    int score = 0;
-    int zobristKey = 0;
+    this->score = 0;
+    this->zobristKey = 0;
     clearPieceLists();
 
     for (auto x : fen)
@@ -146,6 +147,7 @@ void Board::loadFEN(string fen, bool isWhite, bool whiteCanCastleKingSide,
             current++;
         }
     }
+    this->isWhite = isWhite;
     sideToMove = isWhite ? Pieces::White : Pieces::Black;
     otherSide = isWhite ? Pieces::Black : Pieces::White;
     this->blackCanCastleKingSide = blackCanCastleKingSide;
@@ -163,6 +165,35 @@ void Board::loadFEN(string fen, bool isWhite, bool whiteCanCastleKingSide,
     attackedBB[otherSide] = getAttackedBB(otherSide);
     inCheck = attackedBB[otherSide] & pieceBB[Pieces::King] & colorBB[sideToMove];
 }
+
+void Board::printFEN() 
+{
+    int open = 0;
+    for (int square = 64; square >= 0; square--) {
+        if (square % 8 == 0) {
+            if (open) {
+                std::cout << open;
+                open = 0;
+            }
+            std::cout << "/";
+        }
+        Piece piece = board[square-1];
+        if (piece) 
+        {
+            if (open) {
+                std::cout << open;
+                open = 0;
+            }
+            std::cout << pieceToChar(piece);
+        }
+        else {
+            open += 1;
+        }
+        
+    }
+}
+
+
 // Set's a move on the board and updates the bitboards
 void Board::setMove(Move move)
 {
@@ -174,7 +205,8 @@ void Board::setMove(Move move)
 
     if (Pieces::getType(capturedPiece) == Pieces::King)
     {
-        assert(false);
+        printFEN();
+        std::cout << move;
     }
 
     removePiece(from);
@@ -595,8 +627,8 @@ void Board::makeMove(Move move)
     // castleKey = blackCanCastleKingSide << 3 | blackCanCastleQueenSide << 2 |
     //             whiteCanCastleKingSide << 1 | whiteCanCastleKingSide << 0;
 
-    // zobristKey ^= Zobrist::side[isWhite];
-    // zobristKey ^= Zobrist::side[!isWhite];
+    zobristKey ^= Zobrist::side[isWhite];
+    zobristKey ^= Zobrist::side[!isWhite];
     //  cout << zobristKey;
 }
 
@@ -690,8 +722,8 @@ void Board::undoMove()
 
     // zobristKey = enPassantHash ^ Zobrist::side[isWhite] ^
     // Zobrist::castle[castleKey]; cout << zobristKey << "\n";
-    // zobristKey ^= Zobrist::side[isWhite];
-    // zobristKey ^= Zobrist::side[!isWhite];
+    zobristKey ^= Zobrist::side[isWhite];
+    zobristKey ^= Zobrist::side[!isWhite];
 }
 
 bool Board::isCheck(Move move)
@@ -706,7 +738,9 @@ Direction Board::isPinned(int square)
 {
     // Get king square
     Bitboard kingBB = colorBB[sideToMove] & pieceBB[Pieces::King];
-    assert(kingBB != 0);
+    if (!kingBB) {
+        printFEN();
+    }
     int kingSquare = getLSB(&kingBB);
 
     // Get all enemy pieces

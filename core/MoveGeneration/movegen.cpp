@@ -177,14 +177,11 @@ void generatePawnMoves(Board *board, MoveList *MoveList, bool onlyCaptures)
             int to = popLSB(&singlePush);
             int from = to + (board->isWhite ? 8 : -8);
 
-            Direction pin = board->isPinned(from);
-            if (pin != NULLDIR)
+            const Direction pin = board->isPinned(from);
+            if (!(pin == N || pin == S || pin==NULLDIR))
             {
-                if (!(pin == N || pin == S))
-                {
-                    clearBit(&doublePush, to + up);
-                    continue;
-                }
+                clearBit(&doublePush, to + up);
+                continue;
             }
             if (indexToRank(to) == 0 || indexToRank(to) == 7)
             {
@@ -203,6 +200,14 @@ void generatePawnMoves(Board *board, MoveList *MoveList, bool onlyCaptures)
         {
             int to = popLSB(&doublePush);
             int from = to + (board->isWhite ? 16 : -16);
+
+            const Direction pin = board->isPinned(from);
+            if (!(pin == N || pin == S || pin == NULLDIR))
+            {
+                clearBit(&doublePush, to + up);
+                continue;
+            }
+
             if (board->board[to] == Pieces::Empty)
             {
                 appendMove(MoveList, board->getMove(from, to));
@@ -467,14 +472,14 @@ void generateCastles(Board *board, MoveList *MoveList)
     {
         if (!(shortCastle[board->sideToMove] & attacked))
         {
-            appendMove(MoveList, board->getMove(60, board->isWhite ? 62 : 6, Pieces::Empty, true));
+            appendMove(MoveList, board->getMove(board->isWhite ? 60 : 4, board->isWhite ? 62 : 6, Pieces::Empty, true));
         }
     }
     if ((longCastle[board->sideToMove] & board->allPiecesBB) == 0 && canLongCastle)
     {
         if (!(longCastle[board->sideToMove + 1] & attacked))
         {
-            appendMove(MoveList, board->getMove(4, board->isWhite ? 58 : 2, Pieces::Empty, true));
+            appendMove(MoveList, board->getMove(board->isWhite ? 60 : 4, board->isWhite ? 58 : 2, Pieces::Empty, true));
         }
     }
 }

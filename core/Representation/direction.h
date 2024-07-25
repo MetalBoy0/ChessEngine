@@ -31,12 +31,19 @@ const Direction rookDirections[4] = {N, S, E, W};
 const Direction queenDirections[8] = {N, S, E, W, NE, SE, NW, SW};
 
 extern Direction directions[64][64];
-extern int16_t distToEdge[64][8];
+extern uint8_t distToEdge[64][8];
 extern void initDirections();
-extern int _dirIndex[19]; // Origin shifted to 10
-extern int getDirIndex(Direction dir);
+
+const unsigned char _tmp[19] = {7, 1, 6, 0, 0, 0, 0, 0, 3, 0, 2, 0, 0, 0, 0, 0, 5, 0, 4};
+
 namespace
 {
+    const unsigned char *_dirIndex = _tmp + 9;
+    
+    inline constexpr unsigned char getDirIndex(const Direction dir)
+    {
+        return (_dirIndex)[dir];
+    }
 
     Direction getDirectionBetween(int from, int to)
     {

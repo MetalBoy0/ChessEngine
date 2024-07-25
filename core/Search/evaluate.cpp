@@ -2,8 +2,6 @@
 #include "../Representation/board.h"
 #include "../MoveGeneration/movegen.h"
 
-
-
 float pieceTableValue(const int table[], int square, bool isWhite)
 {
     return table[(isWhite ? indexToRank(square) * 8 + indexToFile(square) : square)];
@@ -37,8 +35,7 @@ float evaluate(Board *board)
     score += pieceValues[Pieces::King] * popCount(board->pieceBB[Pieces::King] & board->colorBB[Pieces::White]);
     score -= pieceValues[Pieces::King] * popCount(board->pieceBB[Pieces::King] & board->colorBB[Pieces::Black]);
 
-
     // Piece Tables
     score += board->score;
-    return score * (board->isWhite*2-1) ;
+    return score * (board->isWhite * 2 - 1);
 }

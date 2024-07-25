@@ -59,6 +59,7 @@ Move stringToMove(string moveString, Board board)
     return board.getMove(from, to, promote, castle);
 }
 
+
 string moveToString(Move move)
 {
     string moveString = "";
@@ -93,6 +94,39 @@ string moveToString(Move move)
     }
 
     return moveString;
+}
+
+char pieceToChar(Piece piece) {
+    switch (piece) {
+        case Pieces::White | Pieces::Pawn:
+            return 'P';
+        case Pieces::White | Pieces::Knight:
+            return 'N';
+        case Pieces::White | Pieces::Bishop:
+            return 'B';
+        case Pieces::White | Pieces::Rook:
+            return 'R';
+        case Pieces::White | Pieces::Queen:
+            return 'Q';
+        case Pieces::White | Pieces::King:
+            return 'K';
+        case Pieces::Black | Pieces::Pawn:
+            return 'p';
+        case Pieces::Black | Pieces::Knight:
+            return 'n';
+        case Pieces::Black | Pieces::Bishop:
+            return 'b';
+        case Pieces::Black | Pieces::Rook:
+            return 'r';
+        case Pieces::Black | Pieces::Queen:
+            return 'q';
+        case Pieces::Black | Pieces::King:
+            return 'k';
+        case Pieces::Empty:
+            return 'E';
+        default:
+            return 'U';
+    }
 }
 
 void parseUCI(istringstream &parser)
@@ -322,4 +356,6 @@ void parseDebug(istringstream &parser)
 void parseDisplay(istringstream &parser)
 {
     board.printBoard();
+    std::cout << "\n";
+    board.printFEN();
 }

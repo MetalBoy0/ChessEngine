@@ -41,6 +41,9 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-O3",
+                "-flto",
+                "-funroll-loops",
+                "-ffast-math",
                 "${workspaceFolder}\\main.cpp",
                 "${workspaceFolder}\\uci.cpp",
                 "${workspaceFolder}\\core\\Representation\\board.cpp",

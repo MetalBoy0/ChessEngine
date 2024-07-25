@@ -193,19 +193,21 @@ Bitboard setupBitboardRay(int from, int to)
 
 Bitboard bitboardRay(int from, int to) { return bitboardRays[from][to]; }
 
-Bitboard sendRay(Bitboard *bb, Direction dir, int square)
+Bitboard sendRay(const Bitboard* bb, const Direction dir, const int square) 
 {
+
     Bitboard obb = 0;
-    if (distToEdge[square][getDirIndex(dir)] == 0)
-    {
+    const unsigned char dirIndex = getDirIndex(dir);
+
+    if (distToEdge[square][dirIndex] == 0) {
         return obb;
     }
+
     int current = square + dir;
-    while (distToEdge[current][getDirIndex(dir)] != 0 && !getBit(bb, current))
-    {
-        setBit(&obb, current);
+    while (distToEdge[current][dirIndex] != 0 && !(((*bb) >> current) & 1)) {
+        obb |= (1ULL << current);
         current += dir;
     }
-    setBit(&obb, current);
+    obb |= (1ULL << current);
     return obb;
 }

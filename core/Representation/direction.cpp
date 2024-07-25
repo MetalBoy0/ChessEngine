@@ -5,15 +5,11 @@ using namespace std;
 Direction directions[64][64];
 /*Distance to the edge of the board from every direction, in order:
   In order N S E W NE NW SE SW*/
-int16_t distToEdge[64][8];
+uint8_t distToEdge[64][8];
 
-int _dirIndex[19] = { 7, 1, 6, 0, 0, 0, 0, 0, 3, 0, 2, 0, 0, 0, 0, 0, 5, 0, 4 };
-int* d = _dirIndex + 9;
 
-int getDirIndex(Direction dir)
-{
-    return (d)[dir];
-}
+
+
 
 
 

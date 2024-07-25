@@ -17,7 +17,7 @@ typedef uint8_t Piece;
 
 namespace Pieces
 {
-    enum PieceType
+    enum PieceType : uint8_t
     {
         Empty,
         Pawn,
@@ -28,7 +28,7 @@ namespace Pieces
         King
     };
 
-    enum Color
+    enum Color : uint8_t
     {
         White = 0,
         None = 1,
@@ -37,7 +37,7 @@ namespace Pieces
 
 
 
-    constexpr PieceType getType(Piece piece)
+    inline constexpr PieceType getType(const Piece piece)
     {
         return static_cast<PieceType>(piece & 7);
     }

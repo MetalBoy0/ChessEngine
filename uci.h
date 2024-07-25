@@ -11,6 +11,7 @@ using namespace std;
 
 extern Move stringToMove(string moveString, Board board);
 extern string moveToString(Move move);
+extern char pieceToChar(Piece piece);
 extern void parseUCI(istringstream &parser);      // Handles the "UCI" command
 extern void parseIsReady(istringstream &parser);  // Handles the "isready" command
 extern void parseNewGame(istringstream &parser);  // Handles the "ucinewgame" command
