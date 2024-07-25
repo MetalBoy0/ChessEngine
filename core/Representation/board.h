@@ -213,7 +213,7 @@ public:
         seed ^= (seed >> 15);
         seed ^= (seed << 32);
         seed ^= ((seed + 78651276235ULL) >> 21);
-        return seed * 893652645892356ULL;
+        return seed * 893652645892355ULL;
     }
 };
 namespace Zobrist
