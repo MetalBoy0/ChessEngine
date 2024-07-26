@@ -1,5 +1,9 @@
 This project aims to help me learn C++.
 
+### Todo:
+- Fix gui.py
+- Prune a lot more
+- More complex evaluation funcion
 
 ### Installation
 - Download Pioneer.exe from the releases
