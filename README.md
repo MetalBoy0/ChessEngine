@@ -1,12 +1,12 @@
-This project aims to help me learn C++.
+## Pioneer Chess AI
+A simple UCI chess engine inspired by Sebastian Lague's coding adventure series  
+Pioneer uses the UCI protocol there is no GUI
 
-### Todo:
+### Todo
 - Prune a lot more
-- More complex evaluation funcion
+- More complex evaluation function
+- Time management
 
-### Installation
-- Download Pioneer.exe from the releases
-### How to use:
+Note: `go` doesn't support wtime, or btime (yet)
 
-Just double click and enjoy :)
-
+If you would like to compile yourself, read the compile.txt, I'm working on a make file
