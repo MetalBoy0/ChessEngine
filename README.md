@@ -9,4 +9,4 @@ Pioneer uses the UCI protocol there is no GUI
 
 Note: `go` doesn't support wtime, or btime (yet)
 
-If you would like to compile yourself, read the compile.txt, I'm working on a make file
+If you would like to compile yourself, read the compile.txt, I'm working on a makefile
