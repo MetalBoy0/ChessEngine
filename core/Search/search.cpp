@@ -1,37 +1,66 @@
-#include "../../uci.h"
-#include "../MoveGeneration/movegen.h"
-#include "../Representation/board.h"
-#include "../Representation/move.h"
-#include "evaluate.h"
-#include "moveOrder.h"
-#include "search.h"
 #include <cassert>
 #include <chrono>
 
+#include "evaluate.h"
+#include "moveOrder.h"
+#include "search.h"
+#include "../uci.h"
+#include "../movegen/movegen.h"
+#include "../representation/board.h"
+#include "../representation/move.h"
+
 using namespace std;
 
-#define MAX_DEPTH 64
-#define POSINF 1000000
-#define NEGINF -1000000
+// clang-format off
+#define POSINF           1000000
+#define NEGINF          -1000000
+#define FUTILITY_MARGIN  200
+#define RAZORING_MARGIN  500
+// clang-format on
+
+unsigned long long startTime;
+float maxTimeMS = 0;
+bool stopSearch = false;
 
 TranspositionTable *tt = new TranspositionTable(pow(2, 20));
 
-float min(float a, float b) { return a < b ? a : b; }
-
-float max(float a, float b) { return a > b ? a : b; }
-
 void clearTTSearch() { tt->clear(); }
 
-struct searchDiagnostics
+int futilityMargin(int depth)
 {
-    unsigned int nodes;
-    unsigned int qNodes;
+    return FUTILITY_MARGIN * depth;
+}
+
+ostream &operator<<(ostream &os, const MoveStack &moveVal)
+{
+    for (int i = 0; i < moveVal.count; i++)
+    {
+        os << moveToString(moveVal.moves[i]) << " ";
+    }
+    return os;
+}
+
+// Update the path of the stack with the move and the child stack
+void update_path(MoveStack *stack, Move move, const MoveStack *childStack)
+{
+    stack->moves[0] = move;
+    for (int i = 0; i < childStack->count; i++)
+    {
+        stack->moves[i + 1] = childStack->moves[i];
+    }
+    stack->count = childStack->count + 1;
+}
+
+struct SearchDiagnostics
+{
+    unsigned long long nodes;
+    unsigned long long qNodes;
     unsigned long long time;
-    unsigned int cutoffs;
+    unsigned long long cutoffs;
+    unsigned int futilityCutoffs;
+    unsigned int razoringCutoffs;
     unsigned int transpositionCuttoffs;
 };
-
-searchDiagnostics diagnostics;
 
 struct MoveVal
 {
@@ -39,16 +68,16 @@ struct MoveVal
     float value;
 };
 
+SearchDiagnostics diagnostics;
 MoveVal bestMove;
 Move startMove;
-MoveList path;
 
 bool IsMate(int score) { return abs(score) > POSINF - MAX_DEPTH; }
 
 float qsearch(Board *board, int ply, float alpha, float beta)
 {
     diagnostics.qNodes++;
-    int eval = evaluate(board);
+    float eval = evaluate(board);
     diagnostics.nodes++;
     if (eval >= beta)
     {
@@ -59,8 +88,9 @@ float qsearch(Board *board, int ply, float alpha, float beta)
     {
         alpha = eval;
     }
+
     MoveList moveList;
-    generateMoves(board, &moveList, true);
+    generateMoves(board, moveList, true);
     sortMoves(&moveList, 0, board, true);
     if (moveList.count == 0)
     {
@@ -68,20 +98,11 @@ float qsearch(Board *board, int ply, float alpha, float beta)
     }
     for (int i = 0; i < moveList.count; i++)
     {
-        // unsigned long long oldZ = board->zobristKey;
-        // if (oldZ == 18446744072653600672ULL)
-        //{
-        //     cout << "bad";
-        // }
-        int score = board->score;
+
         board->makeMove(moveList.moves[i]);
         float value = -qsearch(board, ply + 1, -beta, -alpha);
         board->undoMove();
 
-        // if (oldZ != board->zobristKey)
-        //{
-        //     cout << "Bad";
-        // }
         if (value >= beta)
         {
             return beta;
@@ -94,26 +115,45 @@ float qsearch(Board *board, int ply, float alpha, float beta)
     return alpha;
 }
 
-float search(Board *board, unsigned int depth, int ply, float alpha,
-             float beta)
+int search(Board *board, unsigned int depth, int ply, float alpha,
+           float beta, MoveStack *stack)
 {
 
+    // check for time
+    if (!stopSearch && chrono::duration_cast<chrono::nanoseconds>(
+                           chrono::system_clock::now().time_since_epoch())
+                                   .count() -
+                               startTime >
+                           maxTimeMS * 1000000)
+    {
+        stopSearch = true;
+    }
+
+    if (stopSearch)
+    {
+        return 0;
+    }
+
+    // If we are at a leaf node, we call qsearch
     if (depth == 0)
     {
-        return qsearch(board, ply, alpha,
-                       beta); // qsearch(board, ply, alpha, beta);
+        return qsearch(board, ply, alpha, beta); // qsearch(board, ply, alpha, beta);
     }
+
+    // If we aren't at a root node, we check if we can do a cutoff
     if (ply > 0)
     {
-        alpha = max(alpha, -POSINF + ply);
+        alpha = max(alpha, NEGINF + ply);
         beta = min(beta, POSINF - ply);
         if (alpha >= beta)
         {
+
             diagnostics.cutoffs++;
             return alpha;
         }
     }
 
+    // Transposition Table Lookup
     int ttVal = tt->probe(board->zobristKey, depth, alpha, beta);
 
     if (ttVal != tt->failed)
@@ -123,15 +163,39 @@ float search(Board *board, unsigned int depth, int ply, float alpha,
             bestMove.move = tt->getMove(board->zobristKey);
             bestMove.value = ttVal;
         }
+
         diagnostics.transpositionCuttoffs++;
 
         return ttVal;
     }
 
-    // diagnostics.nodes++;
+    // Initialize node stuff
+    diagnostics.nodes++;
+    float eval = evaluate(board);
+
+    // Futility pruning
+    if (depth < 4 && !board->inCheck && eval - futilityMargin(depth) >= beta &&
+        !IsMate(eval))
+    {
+
+        diagnostics.cutoffs++;
+        diagnostics.futilityCutoffs++;
+
+        return eval - futilityMargin(depth);
+    }
+
+    // Razoring
+    if (depth == 1 && !board->inCheck && eval + RAZORING_MARGIN <= alpha &&
+        !IsMate(eval))
+    {
+
+        diagnostics.cutoffs++;
+
+        return qsearch(board, ply, alpha, beta);
+    }
 
     MoveList moveList;
-    generateMoves(board, &moveList);
+    generateMoves(board, moveList);
 
     if (moveList.count == 0)
     {
@@ -147,17 +211,21 @@ float search(Board *board, unsigned int depth, int ply, float alpha,
     sortMoves(&moveList, startMove, board);
     TranspositionTable::EvalType evalType = TranspositionTable::Upper;
 
-    Move bestMoveCurrent = 0;
+    Move bestMoveCurrent = 0; // Best move for current node
 
+    // Iterate through all moves
     for (int i = 0; i < moveList.count; i++)
     {
         Move move = moveList.moves[i];
-        // unsigned long long oldZ = board->zobristKey;
-        int score = board->score;
-
         board->makeMove(move);
-        float value = -search(board, depth - 1, ply + 1, -beta, -alpha);
+        float value = -search(board, depth - 1, ply + 1, -beta, -alpha, (stack + 1));
         board->undoMove();
+
+        if (stopSearch)
+        {
+            return 0;
+        }
+
         if (value >= beta)
         {
             tt->store(board->zobristKey, depth, value, move,
@@ -173,10 +241,10 @@ float search(Board *board, unsigned int depth, int ply, float alpha,
             {
                 bestMove.move = move;
                 bestMove.value = value;
-                cout << "currmove " << moveToString(bestMove.move) << "\n";
+                cout << "info string current best " << moveToString(bestMove.move) << "\n";
             }
-            path.moves[ply] = move;
             bestMoveCurrent = move;
+            update_path(stack, move, (stack + 1));
         }
     }
     tt->store(board->zobristKey, depth, alpha, bestMoveCurrent, evalType);
@@ -191,12 +259,13 @@ void startIterativeDeepening(Board *board, unsigned int maxDepth,
     diagnostics.qNodes = 0;
     diagnostics.time = 0;
     diagnostics.cutoffs = 0;
+    diagnostics.futilityCutoffs = 0;
     diagnostics.transpositionCuttoffs = 0;
+
     startMove = 0;
-    unsigned long long startTime =
-        chrono::duration_cast<chrono::milliseconds>(
-            chrono::system_clock::now().time_since_epoch())
-            .count();
+
+    MoveVal prevBestMove = bestMove;
+
     for (int i = 1; i <= maxDepth; i++)
     {
         unsigned long long startDepthTime =
@@ -204,27 +273,56 @@ void startIterativeDeepening(Board *board, unsigned int maxDepth,
                 chrono::system_clock::now().time_since_epoch())
                 .count();
         diagnostics.time = startDepthTime;
-        bestMove.move = 0;
-        bestMove.value = -100000;
 
-        search(board, i, 0, NEGINF, POSINF);
+        startMove = bestMove.move;
+        prevBestMove = bestMove;
+
+        bestMove.move = 0;
+        bestMove.value = NEGINF;
+
+        MoveStack stack[MAX_DEPTH];
+        MoveStack *bestStack = stack;
+
+        for (int d = 0; d < MAX_DEPTH; d++)
+        {
+            stack[d].count = 0;
+            for (int j = 0; j < MAX_DEPTH; j++)
+            {
+                stack[d].moves[j] = 0;
+            }
+        }
+
+        search(board, i, 0, NEGINF, POSINF, bestStack);
+
+        if (stopSearch)
+        {
+            cout << "info string stopping search, using search results from depth " << i - 1 << "\n";
+            bestMove = prevBestMove;
+            break;
+        }
 
         unsigned long long currentTime =
             chrono::duration_cast<chrono::milliseconds>(
                 chrono::system_clock::now().time_since_epoch())
                 .count();
-        int used = (float)(tt->used) / (float)(tt->size) * 1000;
-        cout << "info depth " << i << " score cp " << bestMove.value << " nodes "
-             << diagnostics.nodes << " nps "
-             << diagnostics.nodes * 1000 / (currentTime - startDepthTime + 1)
-             << " hashfull " << used << " pv " << diagnostics.transpositionCuttoffs
-             << "\n";
-        startMove = bestMove.move;
 
-        if ((currentTime - startTime) > maxTime && maxTime != 0)
-        {
-            break;
-        }
+        int used = (float)(tt->used) / (float)(tt->size) * 1000;
+
+        cout << "info depth "   << i
+             << " score cp "    << bestMove.value
+             << " nodes "       << diagnostics.nodes 
+             << " nps "         << (int)((double)diagnostics.nodes / (double)(currentTime - startDepthTime + 1) * 1000)
+             << " hashfull "    << used 
+             << " pv "          << moveToString(bestMove.move) 
+             << " time "        << currentTime - startDepthTime << "\n";
+
+        diagnostics.nodes = 0;
+        diagnostics.qNodes = 0;
+        diagnostics.time = 0;
+        diagnostics.cutoffs = 0;
+        diagnostics.futilityCutoffs = 0;
+        diagnostics.transpositionCuttoffs = 0;
+
         if (diagnostics.nodes > maxNodes && maxNodes != 0)
         {
             break;
@@ -233,34 +331,29 @@ void startIterativeDeepening(Board *board, unsigned int maxDepth,
         {
             break;
         }
-
-        diagnostics.nodes = 0;
-        diagnostics.qNodes = 0;
-        diagnostics.time = 0;
-        diagnostics.cutoffs = 0;
-        diagnostics.transpositionCuttoffs = 0;
     }
 }
 
 Move startSearch(Board *board, unsigned int depth, int maxTime, int maxNodes,
                  int wtime, int btime)
 {
+    // Initialize search
+    startTime = chrono::duration_cast<chrono::nanoseconds>(
+                    chrono::system_clock::now().time_since_epoch())
+                    .count();
+    maxTimeMS = maxTime == 0 ? 10000000 : maxTime - 50; // Subtract 50ms to be safe
+    stopSearch = false;
 
-    if (wtime != 0 && btime != 0)
-    {
-        maxTime = (wtime + btime) / 4;
-    }
     bestMove.value = -100000;
     bestMove.move = 0;
     startIterativeDeepening(board, depth, maxTime, maxNodes);
-    path.count = depth;
     return bestMove.move;
 }
 
-unsigned int perft(Board *board, const unsigned int depth)
+unsigned long long perft(Board *board, const unsigned int depth)
 {
     MoveList moveList;
-    generateMoves(board, &moveList);
+    generateMoves(board, moveList);
     if (depth == 1U)
     {
         return moveList.count;
@@ -270,34 +363,27 @@ unsigned int perft(Board *board, const unsigned int depth)
         return 1;
     }
 
-    unsigned int nodes = 0;
+    unsigned long long nodes = 0;
     for (int i = 0; i < moveList.count; i++)
     {
         Move move = moveList.moves[i];
-        unsigned long long oldColorBB = board->colorBB[Pieces::Color::Black];
-        int score = board->score;
         board->makeMove(move);
         nodes += perft(board, depth - 1);
         board->undoMove();
-
-        if (oldColorBB != board->colorBB[Pieces::Color::Black])
-        {
-            cout << moveToString(move) << " " << depth;
-        }
     }
     return nodes;
 }
 
-unsigned int startPerft(Board board, unsigned int depth)
+unsigned long long startPerft(Board board, unsigned int depth)
 {
-    unsigned int nodes = 0;
+    unsigned long long nodes = 0;
     MoveList moveList;
-    generateMoves(&board, &moveList);
+    generateMoves(&board, moveList);
     for (int i = 0; i < moveList.count; i++)
     {
         Move move = moveList.moves[i];
         board.makeMove(move);
-        int mNode = perft(&board, depth - 1);
+        unsigned long long mNode = perft(&board, depth - 1);
         board.undoMove();
         cout << moveToString(move) << ": " << mNode << "\n";
         nodes += mNode;

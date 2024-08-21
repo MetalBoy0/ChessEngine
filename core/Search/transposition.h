@@ -1,8 +1,8 @@
 #ifndef TRANSPOSITION_H
 #define TRANSPOSITION_H
 
-#include "..\Representation\move.h"
-#include "..\Representation\board.h"
+#include "../representation/move.h"
+#include "../representation/board.h"
 
 class TranspositionTable
 {

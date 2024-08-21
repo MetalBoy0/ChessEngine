@@ -1,41 +1,49 @@
 #include "evaluate.h"
-#include "../Representation/board.h"
-#include "../MoveGeneration/movegen.h"
+#include "pieceSquareTable.h"
+#include "../representation/bitboard.h"
+#include "../representation/board.h"
+#include "../movegen/movegen.h"
 
-float pieceTableValue(const int table[], int square, bool isWhite)
+int allPieces(Board* board)
 {
-    return table[(isWhite ? indexToRank(square) * 8 + indexToFile(square) : square)];
-}
+    int score = 0;
+    constexpr Pieces::PieceType pieces[] = { Pieces::Pawn, Pieces::Knight, Pieces::Bishop, Pieces::Rook, Pieces::Queen, Pieces::King };
 
-float getTablePieceValues(pieceList pieces, bool isWhite, const int table[])
-{
-    float score = 0;
-    for (int i = 0; i < pieces.count; i++)
+    for (Pieces::PieceType piece : pieces)
     {
-        score += pieceTableValue(table, pieces.pieces[i], isWhite);
+        if (board->pieceBB[piece])
+        {
+            Bitboard wpieces = board->pieceBB[piece] & board->colorBB[Pieces::White];
+            Bitboard bpieces = board->pieceBB[piece] & board->colorBB[Pieces::Black];
+
+			score += popCount(wpieces) * pieceValues[piece];
+			score -= popCount(bpieces) * pieceValues[piece];
+
+            while (wpieces)
+            {
+                int square = popLSB(&wpieces);
+                score += PSQT::psq[piece][square];
+            }
+
+            while (bpieces)
+            {
+                int square = popLSB(&bpieces);
+                score -= flipTable(PSQT::psq[piece])[square];
+            }
+        }
     }
     return score;
 }
 
-float evaluate(Board *board)
+float evaluate(Board* board)
 {
     float score = 0;
 
-    // Add up piece values
-    score += pieceValues[Pieces::Pawn] * popCount(board->pieceBB[Pieces::Pawn] & board->colorBB[Pieces::White]);
-    score -= pieceValues[Pieces::Pawn] * popCount(board->pieceBB[Pieces::Pawn] & board->colorBB[Pieces::Black]);
-    score += pieceValues[Pieces::Knight] * popCount(board->pieceBB[Pieces::Knight] & board->colorBB[Pieces::White]);
-    score -= pieceValues[Pieces::Knight] * popCount(board->pieceBB[Pieces::Knight] & board->colorBB[Pieces::Black]);
-    score += pieceValues[Pieces::Bishop] * popCount(board->pieceBB[Pieces::Bishop] & board->colorBB[Pieces::White]);
-    score -= pieceValues[Pieces::Bishop] * popCount(board->pieceBB[Pieces::Bishop] & board->colorBB[Pieces::Black]);
-    score += pieceValues[Pieces::Rook] * popCount(board->pieceBB[Pieces::Rook] & board->colorBB[Pieces::White]);
-    score -= pieceValues[Pieces::Rook] * popCount(board->pieceBB[Pieces::Rook] & board->colorBB[Pieces::Black]);
-    score += pieceValues[Pieces::Queen] * popCount(board->pieceBB[Pieces::Queen] & board->colorBB[Pieces::White]);
-    score -= pieceValues[Pieces::Queen] * popCount(board->pieceBB[Pieces::Queen] & board->colorBB[Pieces::Black]);
-    score += pieceValues[Pieces::King] * popCount(board->pieceBB[Pieces::King] & board->colorBB[Pieces::White]);
-    score -= pieceValues[Pieces::King] * popCount(board->pieceBB[Pieces::King] & board->colorBB[Pieces::Black]);
-
     // Piece Tables
-    score += board->score;
-    return score * (board->isWhite * 2 - 1);
+    score += allPieces(board);
+
+    // Control of the board
+    score += popCount(board->attackedBB[Pieces::White]) - popCount(board->attackedBB[Pieces::Black]);
+
+    return score * (board->isWhite ? 1 : -1);
 }

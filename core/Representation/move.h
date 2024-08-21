@@ -2,6 +2,7 @@
 #define MOVE_H
 
 #include <cstdint>
+
 #include "piece.h"
 
 // Moves will be a 24 bit unsigned integer

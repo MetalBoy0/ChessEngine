@@ -35,6 +35,11 @@ namespace Pieces
         Black = 8
     };
 
+    inline constexpr Color operator~(Color color)
+    {
+        return static_cast<Color>(color ^ 8);
+    }
+
 
 
     inline constexpr PieceType getType(const Piece piece)
@@ -43,89 +48,89 @@ namespace Pieces
     }
 
     // Returns true if the piece is black
-    constexpr bool isBlack(Piece piece)
+    inline constexpr bool isBlack(Piece piece)
     {
         return (piece & 8) == 8;
     }
 
     // Returns true if the piece is empty
-    constexpr bool isEmpty(Piece piece)
+    inline constexpr bool isEmpty(Piece piece)
     {
         return piece == Empty; // Might need to change this later on, this relies on the fact that an empty piece is white and not black
     }
 
-    constexpr Color getColor(Piece piece)
+    inline constexpr Color getColor(Piece piece)
     {
         return isEmpty(piece) ? None : static_cast<Color>(piece & 8);
     }
 
     // Returns true if the piece is white
-    constexpr bool isPieceWhite(Piece piece)
+    inline constexpr bool isPieceWhite(Piece piece)
     {
         return ((piece & 8) == 0) && (!isEmpty(piece));
     }
 
-    constexpr bool isWhite(Piece piece)
+    inline constexpr bool isWhite(Piece piece)
     {
         return ((piece & 8) == 0);
     }
 
     // Returns true if the piece is a pawn
-    constexpr bool isPawn(Piece piece)
+    inline constexpr bool isPawn(Piece piece)
     {
         return (piece & 7) == Pawn;
     }
 
     // Returns true if the piece is a knight
-    constexpr bool isKnight(Piece piece)
+    inline constexpr bool isKnight(Piece piece)
     {
         return (piece & 7) == Knight;
     }
 
     // Returns true if the piece is a bishop
-    constexpr bool isBishop(Piece piece)
+    inline constexpr bool isBishop(Piece piece)
     {
         return (piece & 7) == Bishop;
     }
 
     // Returns true if the piece is a rook
-    constexpr bool isRook(Piece piece)
+    inline constexpr bool isRook(Piece piece)
     {
         return (piece & 7) == Rook;
     }
 
     // Returns true if the piece is a queen
-    constexpr bool isQueen(Piece piece)
+    inline constexpr bool isQueen(Piece piece)
     {
         return (piece & 7) == Queen;
     }
 
     // Returns true if the piece is a king
-    constexpr bool isKing(Piece piece)
+    inline constexpr bool isKing(Piece piece)
     {
         return (piece & 7) == King;
     }
 
     // Returns true if the piece is of the specified type
     template <PieceType type>
-    constexpr bool isPiece(Piece piece)
+    inline constexpr bool isPiece(Piece piece)
     {
         return (piece & 7) != type;
     }
 
     // Returns true if the piece is a sliding piece (bishop, rook, or queen)
-    constexpr bool isSliding(Piece piece)
+    inline constexpr bool isSliding(Piece piece)
     {
         return isBishop(piece) || isRook(piece) || isQueen(piece);
     }
 
     // Returns true if the piece is a non-sliding piece (pawn, knight, or king)
-    constexpr bool isNonSliding(Piece piece)
+    inline constexpr bool isNonSliding(Piece piece)
     {
         return isPawn(piece) || isKnight(piece) || isKing(piece);
     }
 
-    constexpr Color invertColor(Color color)
+    inline constexpr Color invertColor(Color color)
     {
         return static_cast<Color>(color ^ 8);
     }

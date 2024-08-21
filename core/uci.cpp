@@ -2,16 +2,15 @@
 
 #include <iostream>
 #include <sstream>
-#include "uci.h"
-#include "core\Search\evaluate.h"
-#include "core\representation\bitboard.h"
-#include "core\Search\moveOrder.h"
 #include <chrono>
-#include "core\MoveGeneration\movegen.h"
-#include "microbench\microbench.h"
 
-#define MAX_INT -1u;
-#define MAX_DEPTH 8;
+#include "uci.h"
+#include "search/evaluate.h"
+#include "search/moveOrder.h"
+#include "representation/bitboard.h"
+#include "movegen/movegen.h"
+
+
 
 using namespace std;
 
@@ -19,9 +18,18 @@ Board board;
 
 void setup()
 {
+    initDirections();
+    initBBs();
+    Zobrist::setup();
 
-    // Preform several benchmarking tests here:
-    // cout << moodycamel::microbench([&]() {board.makeMove(board.getMove(10,18));},100, 10) << endl;
+    // Initialize magic bitboards
+
+    precomputeRookMoves();
+    precomputeBishopMoves();
+
+
+    board = Board(); // Initialize the board after the magic bitboards are set up
+    board.loadFEN(startFen, true, true, true, true, true, -1);
 }
 
 Move stringToMove(string moveString, Board board)
@@ -59,7 +67,6 @@ Move stringToMove(string moveString, Board board)
     return board.getMove(from, to, promote, castle);
 }
 
-
 string moveToString(Move move)
 {
     string moveString = "";
@@ -84,9 +91,9 @@ string moveToString(Move move)
         return moveString;
     }
     moveString += (char)(indexToFile(move & 0x3F) + 'a');
-    moveString += (char)(indexToRank(move & 0x3F) + '1');
+    moveString += (char)(7 - indexToRank(move & 0x3F) + '1');
     moveString += (char)(indexToFile(move >> 6 & 0x3F) + 'a');
-    moveString += (char)(indexToRank(move >> 6 & 0x3F) + '1');
+    moveString += (char)(7 - indexToRank(move >> 6 & 0x3F) + '1');
 
     if (isPromotion(move))
     {
@@ -96,42 +103,44 @@ string moveToString(Move move)
     return moveString;
 }
 
-char pieceToChar(Piece piece) {
-    switch (piece) {
-        case Pieces::White | Pieces::Pawn:
-            return 'P';
-        case Pieces::White | Pieces::Knight:
-            return 'N';
-        case Pieces::White | Pieces::Bishop:
-            return 'B';
-        case Pieces::White | Pieces::Rook:
-            return 'R';
-        case Pieces::White | Pieces::Queen:
-            return 'Q';
-        case Pieces::White | Pieces::King:
-            return 'K';
-        case Pieces::Black | Pieces::Pawn:
-            return 'p';
-        case Pieces::Black | Pieces::Knight:
-            return 'n';
-        case Pieces::Black | Pieces::Bishop:
-            return 'b';
-        case Pieces::Black | Pieces::Rook:
-            return 'r';
-        case Pieces::Black | Pieces::Queen:
-            return 'q';
-        case Pieces::Black | Pieces::King:
-            return 'k';
-        case Pieces::Empty:
-            return 'E';
-        default:
-            return 'U';
+char pieceToChar(Piece piece)
+{
+    switch (piece)
+    {
+    case Pieces::White | Pieces::Pawn:
+        return 'P';
+    case Pieces::White | Pieces::Knight:
+        return 'N';
+    case Pieces::White | Pieces::Bishop:
+        return 'B';
+    case Pieces::White | Pieces::Rook:
+        return 'R';
+    case Pieces::White | Pieces::Queen:
+        return 'Q';
+    case Pieces::White | Pieces::King:
+        return 'K';
+    case Pieces::Black | Pieces::Pawn:
+        return 'p';
+    case Pieces::Black | Pieces::Knight:
+        return 'n';
+    case Pieces::Black | Pieces::Bishop:
+        return 'b';
+    case Pieces::Black | Pieces::Rook:
+        return 'r';
+    case Pieces::Black | Pieces::Queen:
+        return 'q';
+    case Pieces::Black | Pieces::King:
+        return 'k';
+    case Pieces::Empty:
+        return 'E';
+    default:
+        return 'U';
     }
 }
 
 void parseUCI(istringstream &parser)
 {
-    cout << "id name Pioneer V0.3\n";
+    cout << "id name Pioneer V0.3.2\n";
     cout << "id author Will Garrison\n";
     cout << "uciok\n";
 }
@@ -139,7 +148,7 @@ void parseUCI(istringstream &parser)
 void parseIsReady(istringstream &parser)
 {
 
-    cout << "readyok\n";
+    cout << "readyok" << endl;
 }
 
 void parseNewGame(istringstream &parser)
@@ -218,7 +227,7 @@ void parsePosition(istringstream &parser)
 void parseGo(istringstream &parser)
 {
     bool perft = false;             // Is a perft search
-    unsigned int depthValue = 100;  // Targeted depth of the search
+    unsigned int depthValue = MAX_DEPTH;  // Targeted depth of the search
     unsigned int nodesCount = 0;    // Max number of nodes to search
     unsigned int moveTimeValue = 0; // Max time to search in milliseconds
     unsigned int wtime = 0;         // White time
@@ -272,17 +281,15 @@ void parseGo(istringstream &parser)
             btime = stoi(btimeInput);
         }
     }
-    if (moveTimeValue == 0)
-    {
-        moveTimeValue = 2000;
-    }
     if (perft)
     {
         // Perft search
-        cout << board.zobristKey << "\n";
+        cout << "\n";
+
         auto start = chrono::high_resolution_clock::now();
-        unsigned int perft = startPerft(board, depthValue);
+        unsigned long long perft = startPerft(board, depthValue);
         auto stop = chrono::high_resolution_clock::now();
+
         cout << "Perft search to depth: " << depthValue << "\n"
              << "Took " << chrono::duration_cast<chrono::milliseconds>(stop - start).count() << "ms\n";
         cout << "Nodes: " << perft << "\n";
@@ -290,11 +297,10 @@ void parseGo(istringstream &parser)
     else
     {
         // Normal search
-        cout << "Normal search to depth " << depthValue << "\n";
         auto start = chrono::high_resolution_clock::now();
         Move bestMove = startSearch(&board, depthValue, moveTimeValue, nodesCount, wtime, btime);
         auto stop = chrono::high_resolution_clock::now();
-        cout << "bestmove " << moveToString(bestMove) << "\n";
+        cout << "bestmove " << moveToString(bestMove) << endl;
     }
 }
 
@@ -307,10 +313,8 @@ void parseMakeMove(istringstream &parser)
 {
     string input;
     parser >> input;
-    cout << board.zobristKey << "\n";
     Move move = stringToMove(input, board);
     board.makeMove(move);
-    cout << board.zobristKey << "\n";
 }
 
 void parseClearTT(istringstream &parser)
@@ -356,6 +360,6 @@ void parseDebug(istringstream &parser)
 void parseDisplay(istringstream &parser)
 {
     board.printBoard();
-    std::cout << "\n";
+    cout << "\n";
     board.printFEN();
 }

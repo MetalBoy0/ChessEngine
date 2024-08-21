@@ -1,5 +1,6 @@
 #ifndef DIRECTION_H
 #define DIRECTION_H
+
 #include <cstdint>
 #include <cstdlib>
 
@@ -26,42 +27,51 @@ enum Direction : int8_t
     NNW = 15
 };
 
-const Direction bishopDirections[4] = {NE, SE, NW, SW};
-const Direction rookDirections[4] = {N, S, E, W};
-const Direction queenDirections[8] = {N, S, E, W, NE, SE, NW, SW};
+constexpr Direction bishopDirections[4] = {NE, NW, SE, SW};
+constexpr Direction rookDirections[4] = {N, S, E, W};
+constexpr Direction queenDirections[8] = {N, S, E, W, NE, NW, SE, SW};
 
 extern Direction directions[64][64];
-extern uint8_t distToEdge[64][8];
+extern uint8_t distToEdge[64][9];
 extern void initDirections();
-
-const unsigned char _tmp[19] = {7, 1, 6, 0, 0, 0, 0, 0, 3, 0, 2, 0, 0, 0, 0, 0, 5, 0, 4};
+// SE  S  SW                W     E                 NW N  SE
+constexpr unsigned char _tmp[19] = {8, 2, 7, 0, 0, 0, 0, 0, 4, 0, 3, 0, 0, 0, 0, 0, 6, 1, 5};
 
 namespace
 {
     const unsigned char *_dirIndex = _tmp + 9;
-    
-    inline constexpr unsigned char getDirIndex(const Direction dir)
+
+    constexpr unsigned char getDirIndex(const Direction dir)
     {
         return (_dirIndex)[dir];
     }
 
-    Direction getDirectionBetween(int from, int to)
+    inline Direction getDirectionBetween(const int from, const int to)
     {
         return directions[from][to];
     }
 
-    Direction invertDirection(Direction dir)
+    constexpr Direction operator~(const Direction dir)
     {
         return (Direction)(-dir);
     }
 
-    bool onEdge(int to)
+    inline bool onEdge(const int to)
     {
         return (!distToEdge[to][0] || !distToEdge[to][1] || !distToEdge[to][2] ||
                 !distToEdge[to][3] || !distToEdge[to][4] || !distToEdge[to][5] ||
                 !distToEdge[to][6] || !distToEdge[to][7]);
     }
 
+    constexpr bool isDiagonal(const Direction dir)
+    {
+        return dir == NE || dir == SE || dir == NW || dir == SW;
+    }
+
+    constexpr bool isStraight(const Direction dir)
+    {
+        return dir == N || dir == S || dir == E || dir == W;
+    }
 }
 
 #endif

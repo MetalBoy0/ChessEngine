@@ -2,9 +2,11 @@
 #define BOARD_H
 
 #include <iostream>
+
 #include "move.h"
 #include "bitboard.h"
 #include "piece.h"
+
 using namespace std;
 
 struct pieceList
@@ -28,9 +30,7 @@ public:
     Piece board[64];          // 64 board array
     Pieces::Color sideToMove; // Color of side to move
     Pieces::Color otherSide;
-    pieceList pieces[7][2]; // Pieces by type and color [piece][color]
     bool isWhite;           // True if white, false if black
-    int score;
     int enPassantSquare; // -1 if no en passant square, otherwise the square
     int ply;             // number of moves since the start of the game
     int removeCastlingRightsWQ = -1;
@@ -78,11 +78,10 @@ public:
     // Utils
 
     void printBoard();                                                                                                                                                                 // Print the board
-    void loadFEN(string fen, bool isWhite, bool whiteCanCastleKingSide, bool whiteCanCastleQueenSide, bool blackCanCastleKingSide, bool blackCanCastleQueenSide, int enPassantSquare); // Load a fen string
+    void loadFEN(const string &fen, bool isWhite, bool whiteCanCastleKingSide, bool whiteCanCastleQueenSide, bool blackCanCastleKingSide, bool blackCanCastleQueenSide, int enPassantSquare); // Load a fen string
     void printFEN();
     void clearBoard();                                                                                                                                                                 // Clear the board
-    void setupBitboards();                                                                                                                                                             // Set up the bitboards
-    void clearPieceLists();                                                                                                                                                            // Clear the piece lists
+    void setupBitboards();                                                                                                                                                             // Set up the bitboards                                                                                                                                                            // Clear the piece lists
 
     indexList piecesAttackingSquare(int square); // Returns the number of enemy pieces attacking the square
     indexList getCheckers();
@@ -92,65 +91,11 @@ public:
     Board(); // Default constructor
 };
 
-namespace PieceSquareTable
-{
-    // Note that these values are from black's perspective
-    const int psq[][64] = { {0},
-                            { 0,  0,  0,  0,  0,  0,  0,  0, //Pawn
-                             50, 50, 50, 50, 50, 50, 50, 50,
-                             10, 10, 20, 30, 30, 20, 10, 10,
-                              5,  5, 10, 25, 25, 10,  5,  5,
-                              0,  0,  0, 20, 20,  0,  0,  0,
-                              5, -5,-10,  0,  0,-10, -5,  5,
-                              5, 10, 10,-20,-20, 10, 10,  5,
-                              0,  0,  0,  0,  0,  0,  0,  0},
-                            {-50,-40,-30,-30,-30,-30,-40,-50,
-                             -40,-20,  0,  0,  0,  0,-20,-40,
-                             -30,  0, 10, 15, 15, 10,  0,-30,
-                             -30,  5, 15, 20, 20, 15,  5,-30,
-                             -30,  0, 15, 20, 20, 15,  0,-30,
-                             -30,  5, 10, 15, 15, 10,  5,-30,
-                             -40,-20,  0,  5,  5,  0,-20,-40,
-                             -50,-40,-30,-30,-30,-30,-40,-50},
-                            {-20,-10,-10,-10,-10,-10,-10,-20,
-                            -10,  0,  0,  0,  0,  0,  0,-10,
-                            -10,  0,  5, 10, 10,  5,  0,-10,
-                            -10,  5,  5, 10, 10,  5,  5,-10,
-                            -10,  0, 10, 10, 10, 10,  0,-10,
-                            -10, 10, 10, 10, 10, 10, 10,-10,
-                            -10,  5,  0,  0,  0,  0,  5,-10,
-                            -20,-10,-10,-10,-10,-10,-10,-20},
-                            {0,  0,  0,  0,  0,  0,  0,  0,
-                            5, 10, 10, 10, 10, 10, 10,  5,
-                            -5,  0,  0,  0,  0,  0,  0, -5,
-                            -5,  0,  0,  0,  0,  0,  0, -5,
-                            -5,  0,  0,  0,  0,  0,  0, -5,
-                            -5,  0,  0,  0,  0,  0,  0, -5,
-                            -5,  0,  0,  0,  0,  0,  0, -5,
-                            0,  0,  0,  5,  5,  0,  0,  0},
-                            {-20,-10,-10, -5, -5,-10,-10,-20,
-                            -10,  0,  0,  0,  0,  0,  0,-10,
-                            -10,  0,  5,  5,  5,  5,  0,-10,
-                            -5,  0,  5,  5,  5,  5,  0, -5,
-                            0,  0,  5,  5,  5,  5,  0, -5,
-                            -10,  5,  5,  5,  5,  5,  0,-10,
-                            -10,  0,  5,  0,  0,  0,  0,-10,
-                            -20,-10,-10, -5, -5,-10,-10,-20},
-                            {-30,-40,-40,-50,-50,-40,-40,-30,
-                            -30,-40,-40,-50,-50,-40,-40,-30,
-                            -30,-40,-40,-50,-50,-40,-40,-30,
-                            -30,-40,-40,-50,-50,-40,-40,-30,
-                            -20,-30,-30,-40,-40,-30,-30,-20,
-                            -10,-20,-20,-20,-20,-20,-20,-10,
-                            20, 20,  0,  0,  0,  0, 20, 20,
-                            20, 30, 10,  0,  0, 10, 30, 20}};
 
-
-}
 
 namespace
 {
-    string startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    constexpr auto startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     void addPiece(pieceList *list, int square)
     {
         list->pieces[list->count] = square;
@@ -181,7 +126,7 @@ namespace
 
     int indexToRank(int index)
     {
-        return 7 - ((index & 0x38) >> 3);
+        return ((index & 0x38) >> 3);
     }
     int indexToFile(int index)
     {
@@ -189,7 +134,7 @@ namespace
     }
     int rankFileToIndex(int rank, int file)
     {
-        return ((7 - rank) << 3) + file;
+        return (rank << 3) + file;
     }
     int isValidIndex(int index)
     {
@@ -207,7 +152,7 @@ private:
     unsigned long long seed;
 
 public:
-    int rand64()
+    unsigned long long rand64()
     {
         seed += seed/2 + 78651276235ULL;
         seed ^= (seed >> 15);

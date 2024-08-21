@@ -1,11 +1,12 @@
 #include "direction.h"
+#include "../uci.h"
 
 using namespace std;
 
 Direction directions[64][64];
 /*Distance to the edge of the board from every direction, in order:
   In order N S E W NE NW SE SW*/
-uint8_t distToEdge[64][8];
+uint8_t distToEdge[64][9];
 
 
 
@@ -102,17 +103,17 @@ void initDirections()
         int s = rank;
         int w = file;
         int e = 7 - file;
-        int ne = __builtin_fmin(n, e);
-        int nw = __builtin_fmin(n, w);
-        int se = __builtin_fmin(s, e);
-        int sw = __builtin_fmin(s, w);
-        distToEdge[i][0] = n;
-        distToEdge[i][1] = s;
-        distToEdge[i][2] = e;
-        distToEdge[i][3] = w;
-        distToEdge[i][4] = ne;
-        distToEdge[i][5] = nw;
-        distToEdge[i][6] = se;
-        distToEdge[i][7] = sw;
+        int ne = min(n, e);
+        int nw = min(n, w);
+        int se = min(s, e);
+        int sw = min(s, w);
+        distToEdge[i][1] = n;
+        distToEdge[i][2] = s;
+        distToEdge[i][3] = e;
+        distToEdge[i][4] = w;
+        distToEdge[i][5] = ne;
+        distToEdge[i][6] = nw;
+        distToEdge[i][7] = se;
+        distToEdge[i][8] = sw;
     }
 }

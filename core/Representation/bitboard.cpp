@@ -1,45 +1,18 @@
 #include <iostream>
-#include "bitboard.h"
 #include <cassert>
+
+#include "bitboard.h"
+#include "magicBB.h"
+
 using namespace std;
 
-const Bitboard rankMasks[8] = {
-    0x00000000000000FF,
-    0x000000000000FF00,
-    0x0000000000FF0000,
-    0x00000000FF000000,
-    0x000000FF00000000,
-    0x0000FF0000000000,
-    0x00FF000000000000,
-    0xFF00000000000000};
 
-const Bitboard fileMasks[8] = {
-    0x0101010101010101,
-    0x0202020202020202,
-    0x0404040404040404,
-    0x0808080808080808,
-    0x1010101010101010,
-    0x2020202020202020,
-    0x4040404040404040,
-    0x8080808080808080};
-
-const Bitboard middleMask = fullBB ^ (fileMasks[0] | fileMasks[7]);
-
-const Bitboard shortCastle[9] = {
-    0b11ull << 61,
-    0, 0, 0, 0, 0, 0, 0,
-    0b1100000};
-
-const Bitboard longCastle[10] = {
-    0b111ull << 57,
-    0b110ull << 57, 0, 0, 0, 0, 0, 0,
-    0b1110ull, 0b1100ull};
 
 Bitboard knightMoves[64];
 
 Bitboard kingMoves[64];
 
-Bitboard dirToBB[8][64];
+Bitboard dirToBB[9][64];
 
 Bitboard bitboardRays[64][64];
 
@@ -128,13 +101,12 @@ void initBBs()
         kingMoves[i] = bb;
     }
     // Setup dirToBB
-    Direction queenDirectionsOpp[8] = {S, N, W, E, SW, NW, SE, NE};
     for (int i = 0; i < 64; i++)
     {
         for (int j = 0; j < 8; j++)
         {
             Bitboard bb = 0ULL;
-            dirToBB[j][i] = sendRay(&bb, queenDirections[j], i) | sendRay(&bb, queenDirectionsOpp[j], i);
+            dirToBB[getDirIndex(queenDirections[j])][i] = sendRayPre(&bb, queenDirections[j], i);
         }
     }
     for (int i = 0; i < 64; i++)
@@ -193,21 +165,54 @@ Bitboard setupBitboardRay(int from, int to)
 
 Bitboard bitboardRay(int from, int to) { return bitboardRays[from][to]; }
 
-Bitboard sendRay(const Bitboard* bb, const Direction dir, const int square) 
+/* Sends a ray in the direction from the square
+However it's slow and should not be used after the magic bitboards are initialized
+*/
+Bitboard sendRayPre(const Bitboard *bb, const Direction dir, const int square)
 {
 
     Bitboard obb = 0;
-    const unsigned char dirIndex = getDirIndex(dir);
+    unsigned char dirIndex = getDirIndex(dir);
 
-    if (distToEdge[square][dirIndex] == 0) {
+    if (distToEdge[square][dirIndex] == 0)
+    {
         return obb;
     }
 
     int current = square + dir;
-    while (distToEdge[current][dirIndex] != 0 && !(((*bb) >> current) & 1)) {
+    while (distToEdge[current][dirIndex] != 0 && !(((*bb) >> current) & 1))
+    {
         obb |= (1ULL << current);
         current += dir;
     }
     obb |= (1ULL << current);
     return obb;
 }
+
+// Sends a ray in the direction from the square (after the magic bitboards are initialized)
+Bitboard sendRay(const Bitboard *bb, const Direction dir, const int square)
+{
+    unsigned char dirIndex = getDirIndex(dir);
+
+    if (distToEdge[square][dirIndex] == 0)
+    {
+        return 0ULL; // No squares in the direction
+    }
+
+    Bitboard dirBB = dirToBB[dirIndex][square];
+
+    // get magic bitboard for the direction and square
+    if (isStraight(dir))
+    {
+        return rookMagics[square].table[getKey(*bb & rookMasks[square], &rookMagics[square])] & dirBB;
+    }
+    else if (isDiagonal(dir))
+    {
+        return bishopMagics[square].table[getKey(*bb & bishopMasks[square], &bishopMagics[square])] & dirBB;
+    }
+    else
+    {
+        assert(false); // Invalid direction
+    }
+}
+

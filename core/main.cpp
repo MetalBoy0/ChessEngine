@@ -1,9 +1,8 @@
-// My third try at my cpp chess ai, Pioneer.
-// Will Garrison
-// TODO: Ensure it is uci compliant
-// TODO: Get a working move generator
-// TODO: Move generation must support 10 mN/S (Perft up to depth of 5 in < 1 second)
-// TODO: Include Bitboards and eventually magic bitboards
+/*
+Pioneer V0.3
+Will Garrison
+TODO: Ensure it is uci compliant
+*/
 
 #include "uci.h" // uci.cpp will handle the communication between the user and the engine
 
@@ -35,65 +34,58 @@ int main()
         else if (input == "uci")
         {
             parseUCI(parser);
-            //cout << "\n-\n";
         }
 
         else if (input == "isready")
         {
             parseIsReady(parser);
-            //cout << "\n-\n";
         }
 
         else if (input == "ucinewgame")
         {
             parseNewGame(parser);
-            //cout << "\n-\n";
         }
 
         else if (input == "position")
         {
             parsePosition(parser);
-            //cout << "\n-\n";
         }
 
         else if (input == "go")
         {
             parseGo(parser);
-            //cout << "\n-\n";
         }
 
         else if (input == "debug")
         {
             parseDebug(parser);
-            //cout << "\n-\n";
         }
         else if (input == "d")
         {
             parseDisplay(parser);
-            //cout << "\n-\n";
         }
         else if (input == "makemove")
         {
             parseMakeMove(parser);
-            //cout << "\n-\n";
         }
         else if (input == "undomove")
         {
             parseUndoMove(parser);
-            //cout << "\n-\n";
         }
         else if (input == "eval")
         {
             parseEval(parser);
-            //cout << "\n-\n";
         }
-        else if (input == "clear") {
+        else if (input == "clear")
+        {
             parseClearTT(parser);
         }
         else
         {
-            cout << "Unknown command: " << input;
+            cout << "Unknown command: " << input << endl;
         }
-        cout << "\n";
+
+        // Clear the input
+        input.clear();
     }
 }

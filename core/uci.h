@@ -4,10 +4,18 @@
 #include <iostream>
 #include <sstream>
 
-#include "core\representation\board.h"
-#include "core\Search\search.h"
+#include "representation/board.h"
+#include "search/search.h"
+
+#define MAX_INT -1u
+#define MAX_DEPTH 64
 
 using namespace std;
+
+#define min(a, b) ((a < b) ? a : b)
+#define max(a, b) ((a > b) ? a : b)
+
+
 
 extern Move stringToMove(string moveString, Board board);
 extern string moveToString(Move move);

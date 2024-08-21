@@ -1,4 +1,7 @@
+#include <cassert>
+
 #include "transposition.h"
+
 
 void TranspositionTable::store(unsigned long long zobrist, int depth, int value, Move bestMove, EvalType evalType)
 {
@@ -77,10 +80,7 @@ TranspositionTable::TranspositionTable(int size)
     for (int i = 0; i < this->size; i++)
     {
         Entry t = table[i];
-        if (t.evalType != NOTINIT)
-        {
-            cout << i << " " << t.evalType << "\n";
-        }
+        assert(t.evalType == NOTINIT);
     }
 }
 

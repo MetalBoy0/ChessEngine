@@ -1,5 +1,7 @@
-#include "piece.h"
 #include <iostream>
+
+#include "piece.h"
+
 
 using namespace std;
 
