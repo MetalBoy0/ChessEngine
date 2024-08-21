@@ -3,5 +3,5 @@ These commands worked for me using g++-13 and g++-14
 Windows:
 g++.exe -fdiagnostics-color=always -O3 -flto -flto-partition=one -fno-math-errno -fno-trapping-math -funroll-loops -mavx2 -mbmi -msse3 -mpopcnt core/main.cpp core/uci.cpp core/representation/board.cpp core/representation/piece.cpp core/representation/bitboard.cpp core/representation/direction.cpp core/representation/magicBB.cpp core/movegen/movegen.cpp core/search/search.cpp core/search/evaluate.cpp core/search/moveOrder.cpp core/search/transposition.cpp -o .vscode/Pioneer.exe -static -static-libgcc -static-libstdc++ -lwinpthread
 
-Linux:
+Ubuntu:
 g++ -fdiagnostics-color=always -O3 -flto -flto-partition=one -fno-math-errno -fno-trapping-math -funroll-loops -mavx2 -mbmi -msse3 -mpopcnt core/main.cpp core/uci.cpp core/representation/board.cpp core/representation/piece.cpp core/representation/bitboard.cpp core/representation/direction.cpp core/representation/magicBB.cpp core/movegen/movegen.cpp core/search/search.cpp core/search/evaluate.cpp core/search/moveOrder.cpp core/search/transposition.cpp -o .vscode/Pioneer.exe -static -static-libgcc -static-libstdc++ -lpthread
